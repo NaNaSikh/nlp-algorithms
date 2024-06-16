@@ -2,7 +2,8 @@ import sys
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMessageBox, QWidget, QVBoxLayout, QLabel, QToolBar
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMessageBox, QWidget, QVBoxLayout, QLabel, QToolBar, \
+    QLineEdit
 from stemming import stemmingPoterAlgorithm , stemmingSnowballAlgorithm
 from lemmatization import lemmatiazation_function
 
@@ -34,6 +35,10 @@ class MyWindow(QMainWindow):
 
         menubar = self.menuBar()
         menubar.setFont(self.font)
+
+        self.textbox = QLineEdit(self)
+        self.textbox.move(200, 200)
+        self.textbox.resize(280, 40)
 
 
         # # Create actions for the menu
