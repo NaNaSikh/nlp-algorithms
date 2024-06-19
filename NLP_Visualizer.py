@@ -53,7 +53,7 @@ class MyWindow(QMainWindow):
 
         self.dropdown = QComboBox()
         self.dropdown.addItems(["Potter Stemmer", "Stemming Snowball Algorithm", "Lemmatization WordNet", "Lemmatization Spacy"])
-        self.dropdown.currentIndexChanged.connect(self.choose_algorithm)
+        # self.dropdown.currentIndexChanged.connect(self.choose_algorithm)
         self.dropdown.setStyleSheet("background-color : #C39BD3")
         self.dropdown.setFont(self.font)
         layout.addWidget(self.dropdown)
@@ -94,19 +94,28 @@ class MyWindow(QMainWindow):
         self.result_label.setFont(self.font)
         self.scroll_layout.addWidget(self.result_label)
 
-        button = QPushButton('PyQt5 button', self)
+        button = QPushButton('NER Algorithm', self)
         button.setToolTip('This is an example button')
-        button.clicked.connect(self.on_click)
+        button.clicked.connect(self.check_ner)
         button.setStyleSheet("background-color : #C39BD3")
         button.setFont(self.font)
         layout.addWidget(button)
 
+        buttonCalc = QPushButton('Generate ', self)
+        buttonCalc.setToolTip('This is an example button')
+        buttonCalc.clicked.connect(self.choose_algorithm)
+        buttonCalc.setStyleSheet("background-color : #C39BD3")
+        buttonCalc.setFont(self.font)
+        layout.addWidget(buttonCalc)
 
         # toolbar.addAction(stemmingActionPoter)
         # toolbar.addAction(stemmingActionSnowball)
         # toolbar.addAction(lemmatizationAction)
 
     tokenizedText = ""
+
+    # def main_event(self):
+
     def choose_algorithm(self ):
         text = self.tokenizedText
         selected_algorithm = self.dropdown.currentText()
@@ -125,14 +134,18 @@ class MyWindow(QMainWindow):
         self.result_label.setText(result)
 
     @pyqtSlot()
-    def on_click(self):
-        print('PyQt5 button click')
-        text = self.input_field.text()
-        doc = NER_Algorithm(text)
-        ans = ""
-        for ent in doc.ents:
-            ans += f'{ent.text} - {ent.label_}'
-        self.result_label.setText(ans)
+    def check_ner(self):
+        try:
+            print('PyQt5 button click')
+            text = self.input_field.text()
+            entities = NER_Algorithm(text)
+            ans = ""
+            for ent in entities:
+                ans += f'{ent.text} - {ent.label_}\n'
+            self.result_label.setText(ans)
+        except Exception as e:
+            print(f'Error: {e}')
+            self.result_label.setText('Error processing text')
 
 
     def choose_algorithm_tokens(self):
