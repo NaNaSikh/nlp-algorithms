@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMessageBox, QWi
     QComboBox, QScrollArea
 from stemming import stemmingPoterAlgorithm, stemmingSnowballAlgorithm
 from lemmatization import wordnet_lemmatization_function , spacy_lemmatization_function
+from tokenization_algorithms import  whitespaceTokenizationAlgorithm, punctuationTokenizationAlgorithm
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -49,6 +50,12 @@ class MyWindow(QMainWindow):
         self.dropdown.currentIndexChanged.connect(self.choose_algorithm)
         layout.addWidget(self.dropdown)
 
+        self.dropdownTokens = QComboBox()
+        self.dropdownTokens.addItems(
+            ["Whitespace Tokenization", "Punctuation Tokenization"])
+        self.dropdownTokens.currentIndexChanged.connect(self.choose_algorithm_tokens)
+        layout.addWidget(self.dropdownTokens)
+
         # Create a menubar
         menubar = self.menuBar()
         menubar.setFont(self.font)
@@ -86,8 +93,9 @@ class MyWindow(QMainWindow):
         # toolbar.addAction(stemmingActionSnowball)
         # toolbar.addAction(lemmatizationAction)
 
-    def choose_algorithm(self):
-        text = self.input_field.text()
+    tokenizedText = ""
+    def choose_algorithm(self ):
+        text = self.tokenizedText
         selected_algorithm = self.dropdown.currentText()
 
         if selected_algorithm == "Potter Stemmer":
@@ -102,6 +110,21 @@ class MyWindow(QMainWindow):
             result = "Unknown algorithm"
 
         self.result_label.setText(result)
+
+    def choose_algorithm_tokens(self):
+        text = self.input_field.text()
+        selected_algorithm = self.dropdownTokens.currentText()
+
+        if selected_algorithm == "Whitespace Tokenization":
+            result = whitespaceTokenizationAlgorithm(text)
+        elif selected_algorithm == "Punctuation Tokenization":
+            result = punctuationTokenizationAlgorithm(text)
+        else:
+            result = "Unknown algorithm"
+
+        self.tokenizedText = ' '.join(result)
+        print(self.tokenizedText)
+        # self.result_label.setText(self.tokenizedText)
 
     def about(self):
         # Pop up a simple about message box
