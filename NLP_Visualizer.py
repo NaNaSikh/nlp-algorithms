@@ -1,11 +1,11 @@
 import sys
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMessageBox, QWidget, QVBoxLayout, QLabel, QLineEdit, \
-    QComboBox, QScrollArea
+    QComboBox, QScrollArea, QPushButton
 from stemming import stemmingPoterAlgorithm, stemmingSnowballAlgorithm
 from lemmatization import wordnet_lemmatization_function , spacy_lemmatization_function
-from tokenization_algorithms import  whitespaceTokenizationAlgorithm, punctuationTokenizationAlgorithm
+from tokenization_algorithms import  whitespaceTokenizationAlgorithm, punctuationTokenizationAlgorithm , NER_Algorithm
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -15,8 +15,8 @@ class MyWindow(QMainWindow):
     def initUI(self):
         # Set window title and size
         self.setWindowTitle("NLP")
-        self.setGeometry(200, 100, 800, 600)
-        self.setStyleSheet("background-color: #FFB36D;")
+        self.setGeometry(200, 100, 1000, 800)
+        self.setStyleSheet("background-color: #CCCCFF;")
 
         self.font = QFont("Arial", 15)
 
@@ -44,16 +44,26 @@ class MyWindow(QMainWindow):
 
         layout.addWidget(self.scroll_area)
 
+        self.input_field = QLineEdit(self)
+        self.input_field.setPlaceholderText('Enter some text')
+        layout.addWidget(self.input_field)
+        self.input_field.setFont(self.font)
+
+
 
         self.dropdown = QComboBox()
         self.dropdown.addItems(["Potter Stemmer", "Stemming Snowball Algorithm", "Lemmatization WordNet", "Lemmatization Spacy"])
         self.dropdown.currentIndexChanged.connect(self.choose_algorithm)
+        self.dropdown.setStyleSheet("background-color : #C39BD3")
+        self.dropdown.setFont(self.font)
         layout.addWidget(self.dropdown)
 
         self.dropdownTokens = QComboBox()
         self.dropdownTokens.addItems(
             ["Whitespace Tokenization", "Punctuation Tokenization"])
         self.dropdownTokens.currentIndexChanged.connect(self.choose_algorithm_tokens)
+        self.dropdownTokens.setStyleSheet("background-color : #C39BD3")
+        self.dropdownTokens.setFont(self.font)
         layout.addWidget(self.dropdownTokens)
 
         # Create a menubar
@@ -78,16 +88,19 @@ class MyWindow(QMainWindow):
         helpMenu = menubar.addMenu('&Help')
         helpMenu.addAction(aboutAction)
 
-        # Create the input field and add it to the layout
-        self.input_field = QLineEdit(self)
-        self.input_field.setPlaceholderText('Enter some text')
-        layout.addWidget(self.input_field)
-        self.input_field.setFont(self.font)
 
         # Label to display the result
         self.result_label = QLabel("Hi")
         self.result_label.setFont(self.font)
         self.scroll_layout.addWidget(self.result_label)
+
+        button = QPushButton('PyQt5 button', self)
+        button.setToolTip('This is an example button')
+        button.clicked.connect(self.on_click)
+        button.setStyleSheet("background-color : #C39BD3")
+        button.setFont(self.font)
+        layout.addWidget(button)
+
 
         # toolbar.addAction(stemmingActionPoter)
         # toolbar.addAction(stemmingActionSnowball)
@@ -110,6 +123,17 @@ class MyWindow(QMainWindow):
             result = "Unknown algorithm"
 
         self.result_label.setText(result)
+
+    @pyqtSlot()
+    def on_click(self):
+        print('PyQt5 button click')
+        text = self.input_field.text()
+        doc = NER_Algorithm(text)
+        ans = ""
+        for ent in doc.ents:
+            ans += f'{ent.text} - {ent.label_}'
+        self.result_label.setText(ans)
+
 
     def choose_algorithm_tokens(self):
         text = self.input_field.text()
