@@ -2,14 +2,22 @@ import sys
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMessageBox, QWidget, QVBoxLayout, QLabel, QLineEdit, \
-    QComboBox, QScrollArea, QPushButton
+    QComboBox, QScrollArea, QPushButton, QToolBar
 from stemming import stemmingPoterAlgorithm, stemmingSnowballAlgorithm
 from lemmatization import wordnet_lemmatization_function , spacy_lemmatization_function
 from tokenization_algorithms import  whitespaceTokenizationAlgorithm, punctuationTokenizationAlgorithm , NER_Algorithm
+from testAlgorithmResultsLemmas import  getLemmasPlots
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import  matplotlib.pyplot as plt
 
+class PlotCanvas(FigureCanvas):
+    def __init__(self, fig, parent=None):
+        super(PlotCanvas, self).__init__(fig)
+        self.setParent(parent)
 class MyWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self ,  fig):
         super().__init__()
+        self.figure = fig
         self.initUI()
 
     def initUI(self):
@@ -20,15 +28,15 @@ class MyWindow(QMainWindow):
 
         self.font = QFont("Arial", 15)
 
-        # toolbar = QToolBar()
-        # toolbar.setOrientation(Qt.Vertical)
-        # toolbar.setFont(self.font)
-        # self.addToolBar(Qt.LeftToolBarArea, toolbar)
+        toolbar = QToolBar()
+        toolbar.setOrientation(Qt.Vertical)
+        toolbar.setFont(self.font)
+        self.addToolBar(Qt.LeftToolBarArea, toolbar)
 
-        # Create a central widget and layout
-        # central_widget = QWidget()
-        # self.layout = QVBoxLayout(central_widget)
-        # self.setCentralWidget(central_widget)
+
+        central_widget = QWidget()
+        self.layout = QVBoxLayout(central_widget)
+        self.setCentralWidget(central_widget)
 
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
@@ -49,7 +57,8 @@ class MyWindow(QMainWindow):
         layout.addWidget(self.input_field)
         self.input_field.setFont(self.font)
 
-
+        self.plot_canvas = PlotCanvas(self.figure, self)
+        self.layout.addWidget(self.plot_canvas)
 
         self.dropdown = QComboBox()
         self.dropdown.addItems(["Potter Stemmer", "Stemming Snowball Algorithm", "Lemmatization WordNet", "Lemmatization Spacy"])
@@ -189,13 +198,11 @@ class MyWindow(QMainWindow):
         stemmed_text = ", ".join(stemmed_words)
         return f"SpiCy: {stemmed_text}"
 
-if __name__ == '__main__':
-    # Create a QApplication instance
+def main():
     app = QApplication(sys.argv)
-
-    # Create and show the main window
-    window = MyWindow()
-    window.show()
-
-    # Start the event loop
+    main_window = MyWindow(getLemmasPlots())
+    main_window.show()
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()

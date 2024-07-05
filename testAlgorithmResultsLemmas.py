@@ -61,22 +61,40 @@ def evaluate_lemmas(texts):
 ans = evaluate_lemmas(sentences)
 
 # Convert results to a pandas DataFrame
-df = pd.DataFrame(ans, columns=['Lemma', 'Time', 'Unique Lemmas'])
+
 
 # Plotting the results
-plt.figure(figsize=(14, 6))
+# plt.figure(figsize=(14, 6))
+#
+# # Plotting time taken
+# plt.subplot(1, 2, 1)
+# sns.barplot(x='Lemma', y='Time', data=df)
+# plt.title('Time Taken by Different Lemmatization Algorithms')
+# plt.ylabel('Time (seconds)')
+#
+# # Plotting number of unique lemmas
+# plt.subplot(1, 2, 2)
+# sns.barplot(x='Lemma', y='Unique Lemmas', data=df)
+# plt.title('Number of Unique Lemmas Produced by Different Lemmatization Algorithms')
+# plt.ylabel('Unique Lemmas')
+#
+# plt.tight_layout()
+# plt.show()
 
-# Plotting time taken
-plt.subplot(1, 2, 1)
-sns.barplot(x='Lemma', y='Time', data=df)
-plt.title('Time Taken by Different Lemmatization Algorithms')
-plt.ylabel('Time (seconds)')
 
-# Plotting number of unique lemmas
-plt.subplot(1, 2, 2)
-sns.barplot(x='Lemma', y='Unique Lemmas', data=df)
-plt.title('Number of Unique Lemmas Produced by Different Lemmatization Algorithms')
-plt.ylabel('Unique Lemmas')
+def getLemmasPlots():
+    df = pd.DataFrame(ans, columns=['Lemma', 'Time', 'Unique Lemmas'])
+    fig, axs = plt.subplots(1, 2, figsize=(14, 6))
 
-plt.tight_layout()
-plt.show()
+    # Plotting time taken
+    sns.barplot(x='Lemma', y='Time', data=df, ax=axs[0])
+    axs[0].set_title('Time Taken by Different Lemmatization Algorithms')
+    axs[0].set_ylabel('Time (seconds)')
+
+    # Plotting number of unique lemmas
+    sns.barplot(x='Lemma', y='Unique Lemmas', data=df, ax=axs[1])
+    axs[1].set_title('Number of Unique Lemmas Produced by Different Lemmatization Algorithms')
+    axs[1].set_ylabel('Unique Lemmas')
+
+    fig.tight_layout()
+    return fig
