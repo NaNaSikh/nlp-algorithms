@@ -11,15 +11,14 @@ from memory_profiler import memory_usage
 import pandas as pd
 import seaborn as sns
 
-# Download the necessary NLTK data
 nltk.download('punkt')
 nltk.download('wordnet')
 
-# Load a sample text from the Gutenberg corpus
-text = gutenberg.raw('austen-emma.txt')[:5000]  # Using the first 5000 characters for demonstration
+
+text = gutenberg.raw('austen-emma.txt')[:5000]
 sentences = sent_tokenize(text)
 
-# Initialize spaCy
+
 nlp = spacy.load('en_core_web_sm')
 
 def lemmatize_with_spacy(text):
@@ -33,7 +32,7 @@ def lemmatize_with_wordnet(words):
     lemmas = [wordnet_lemmatizer.lemmatize(word) for word in words]
     return ' '.join(lemmas)
 
-# Function to evaluate lemmatization algorithms
+
 def evaluate_lemmas(texts):
     results = []
     lemma_algorithms = {
@@ -55,46 +54,6 @@ def evaluate_lemmas(texts):
     return results
 
 
-
-
-# Evaluate the lemmatizers
-ans = evaluate_lemmas(sentences)
-
-# Convert results to a pandas DataFrame
-
-
-# Plotting the results
-# plt.figure(figsize=(14, 6))
-#
-# # Plotting time taken
-# plt.subplot(1, 2, 1)
-# sns.barplot(x='Lemma', y='Time', data=df)
-# plt.title('Time Taken by Different Lemmatization Algorithms')
-# plt.ylabel('Time (seconds)')
-#
-# # Plotting number of unique lemmas
-# plt.subplot(1, 2, 2)
-# sns.barplot(x='Lemma', y='Unique Lemmas', data=df)
-# plt.title('Number of Unique Lemmas Produced by Different Lemmatization Algorithms')
-# plt.ylabel('Unique Lemmas')
-#
-# plt.tight_layout()
-# plt.show()
-
-
 def getLemmasPlots():
-    df = pd.DataFrame(ans, columns=['Lemma', 'Time', 'Unique Lemmas'])
-    fig, axs = plt.subplots(1, 2, figsize=(14, 6))
-
-    # Plotting time taken
-    sns.barplot(x='Lemma', y='Time', data=df, ax=axs[0])
-    axs[0].set_title('Time Taken by Different Lemmatization Algorithms')
-    axs[0].set_ylabel('Time (seconds)')
-
-    # Plotting number of unique lemmas
-    sns.barplot(x='Lemma', y='Unique Lemmas', data=df, ax=axs[1])
-    axs[1].set_title('Number of Unique Lemmas Produced by Different Lemmatization Algorithms')
-    axs[1].set_ylabel('Unique Lemmas')
-
-    fig.tight_layout()
-    return fig
+    df = pd.DataFrame(evaluate_lemmas(sentences), columns=['Lemma', 'Time', 'Unique Lemmas'])
+    return df

@@ -1,131 +1,179 @@
 import sys
+import pandas as pd
+import seaborn as sns
+
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QMessageBox, QWidget, QVBoxLayout, QLabel, QLineEdit, \
-    QComboBox, QScrollArea, QPushButton, QToolBar
-from stemming import stemmingPoterAlgorithm, stemmingSnowballAlgorithm
-from lemmatization import wordnet_lemmatization_function , spacy_lemmatization_function
-from tokenization_algorithms import  whitespaceTokenizationAlgorithm, punctuationTokenizationAlgorithm , NER_Algorithm
-from testAlgorithmResultsLemmas import  getLemmasPlots
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QAction, QMessageBox, QWidget,
+    QVBoxLayout, QLabel, QLineEdit, QComboBox, QScrollArea,
+    QPushButton, QStackedWidget
+)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import  matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+
+from stemming import stemmingPoterAlgorithm, stemmingSnowballAlgorithm
+from lemmatization import wordnet_lemmatization_function, spacy_lemmatization_function
+from tokenization_algorithms import whitespaceTokenizationAlgorithm, punctuationTokenizationAlgorithm, NER_Algorithm
+from testAlgorithmResultsLemmas import getLemmasPlots
+from testAlgorithmsResults import  getStemmersPlots
 
 class PlotCanvas(FigureCanvas):
-    def __init__(self, fig, parent=None):
-        super(PlotCanvas, self).__init__(fig)
+    def __init__(self, df, df2, parent=None):
+        self.fig, self.axs = plt.subplots(2, 2, figsize=(12, 8), dpi=100)
+        super(PlotCanvas, self).__init__(self.fig)
         self.setParent(parent)
+        self.plot(df ,  df2)
+
+    def plot(self, df ,  df2):
+        # Clear the axes
+        for ax_row in self.axs:
+            for ax in ax_row:
+                ax.clear()
+
+        # Plotting time taken by different lemmatization algorithms
+        sns.barplot(x='Lemma', y='Time', data=df, ax=self.axs[0][0])
+        self.axs[0][0].set_title('Time Taken by Different Lemmatization Algorithms')
+        self.axs[0][0].set_ylabel('Time (seconds)')
+
+        # Plotting number of unique lemmas
+        sns.barplot(x='Lemma', y='Unique Lemmas', data=df, ax=self.axs[0][1])
+        self.axs[0][1].set_title('Number of Unique Lemmas Produced by Different Lemmatization Algorithms')
+        self.axs[0][1].set_ylabel('Unique Lemmas')
+
+        # Optionally, plot more data in the other subplots as needed
+        sns.barplot(x='Stemmer', y='Time', data=df2, ax=self.axs[1][0])
+        self.axs[1][0].set_title('Time Taken by Different Stemmization Algorithms')
+        self.axs[1][0].set_ylabel('Time (seconds)')
+
+        sns.barplot(x='Stemmer', y='Unique Stems', data=df2, ax=self.axs[1][1])
+        self.axs[1][1].set_title('Number of Unique Stemms  Produced by Different Stemmization  Algorithms')
+        self.axs[1][1].set_ylabel('Unique Lemmas')
+
+        # Redraw the canvas
+        self.draw()
+
+
+
+
 class MyWindow(QMainWindow):
-    def __init__(self ,  fig):
+    def __init__(self, df ,  df2):
         super().__init__()
-        self.figure = fig
-        self.initUI()
 
-    def initUI(self):
-        # Set window title and size
-        self.setWindowTitle("NLP")
-        self.setGeometry(200, 100, 1000, 800)
-        self.setStyleSheet("background-color: #CCCCFF;")
+        self.setWindowTitle('NLP Algorithms Visualizer')
+        self.setGeometry(100, 100, 800, 600)
 
-        self.font = QFont("Arial", 15)
-
-        toolbar = QToolBar()
-        toolbar.setOrientation(Qt.Vertical)
-        toolbar.setFont(self.font)
-        self.addToolBar(Qt.LeftToolBarArea, toolbar)
-
-
+        # Create a central widget
         central_widget = QWidget()
         self.layout = QVBoxLayout(central_widget)
         self.setCentralWidget(central_widget)
 
-        central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
-        self.setCentralWidget(central_widget)
+        # Create a stacked widget
+        self.stacked_widget = QStackedWidget()
+        self.layout.addWidget(self.stacked_widget)
 
-        # Create a scroll area
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-
-        self.scroll_content = QWidget()
-        self.scroll_layout = QVBoxLayout(self.scroll_content)
-        self.scroll_area.setWidget(self.scroll_content)
-
-        layout.addWidget(self.scroll_area)
-
-        self.input_field = QLineEdit(self)
-        self.input_field.setPlaceholderText('Enter some text')
-        layout.addWidget(self.input_field)
-        self.input_field.setFont(self.font)
-
-        self.plot_canvas = PlotCanvas(self.figure, self)
-        self.layout.addWidget(self.plot_canvas)
-
-        self.dropdown = QComboBox()
-        self.dropdown.addItems(["Potter Stemmer", "Stemming Snowball Algorithm", "Lemmatization WordNet", "Lemmatization Spacy"])
-        # self.dropdown.currentIndexChanged.connect(self.choose_algorithm)
-        self.dropdown.setStyleSheet("background-color : #C39BD3")
-        self.dropdown.setFont(self.font)
-        layout.addWidget(self.dropdown)
-
-        self.dropdownTokens = QComboBox()
-        self.dropdownTokens.addItems(
-            ["Whitespace Tokenization", "Punctuation Tokenization"])
-        self.dropdownTokens.currentIndexChanged.connect(self.choose_algorithm_tokens)
-        self.dropdownTokens.setStyleSheet("background-color : #C39BD3")
-        self.dropdownTokens.setFont(self.font)
-        layout.addWidget(self.dropdownTokens)
+        # Create different pages
+        self.create_home_page()
+        self.create_plot_page(df ,df2)
+        self.create_model_page()
 
         # Create a menubar
         menubar = self.menuBar()
-        menubar.setFont(self.font)
 
         # Create actions for the menu
-        exitAction = QAction('&Exit', self)
-        exitAction.setFont(self.font)
-        exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(self.close)
+        home_action = QAction('&Home', self)
+        home_action.triggered.connect(self.show_home_page)
+        plot_action = QAction('&Plot', self)
+        plot_action.triggered.connect(self.show_plot_page)
+        model_action = QAction('&Model' , self)
+        model_action.triggered.connect(self.show_model_page)
 
-        aboutAction = QAction('&About', self)
-        aboutAction.setFont(self.font)
-        aboutAction.setStatusTip('About this application')
-        aboutAction.triggered.connect(self.about)
+        exit_action = QAction('&Exit', self)
+        exit_action.triggered.connect(self.close)
 
         # Add actions to the menubar
-        fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(exitAction)
+        file_menu = menubar.addMenu('&File')
+        file_menu.addAction(exit_action)
 
-        helpMenu = menubar.addMenu('&Help')
-        helpMenu.addAction(aboutAction)
+        view_menu = menubar.addMenu('&View')
+        view_menu.addAction(home_action)
+        view_menu.addAction(plot_action)
+        view_menu.addAction(model_action)
 
 
-        # Label to display the result
-        self.result_label = QLabel("Hi")
-        self.result_label.setFont(self.font)
-        self.scroll_layout.addWidget(self.result_label)
+    def create_model_page(self):
+        home_widget = QWidget()
+        home_layout = QVBoxLayout(home_widget)
+
+        label = QLabel('Home Page', self)
+        home_layout.addWidget(label)
+
+        self.stacked_widget.addWidget(home_widget)
+    def create_home_page(self):
+        home_widget = QWidget()
+        home_layout = QVBoxLayout(home_widget)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)  # Corrected from home_layout to scroll_layout
+        scroll_area.setWidget(scroll_content)
+
+        home_layout.addWidget(scroll_area)  # Add scroll_area to home_layout
+
+        self.input_field = QLineEdit(self)
+        self.input_field.setPlaceholderText('Enter some text')
+        scroll_layout.addWidget(self.input_field)  # Corrected from home_layout to scroll_layout
+
+        self.dropdown = QComboBox()
+        self.dropdown.addItems(
+            ["Potter Stemmer", "Stemming Snowball Algorithm", "Lemmatization WordNet", "Lemmatization Spacy"]
+        )
+        scroll_layout.addWidget(self.dropdown)  # Corrected from home_layout to scroll_layout
+
+        self.dropdownTokens = QComboBox()
+        self.dropdownTokens.addItems(["Whitespace Tokenization", "Punctuation Tokenization"])
+        scroll_layout.addWidget(self.dropdownTokens)  # Corrected from home_layout to scroll_layout
 
         button = QPushButton('NER Algorithm', self)
         button.setToolTip('This is an example button')
-        button.clicked.connect(self.check_ner)
-        button.setStyleSheet("background-color : #C39BD3")
-        button.setFont(self.font)
-        layout.addWidget(button)
+        scroll_layout.addWidget(button)  # Corrected from home_layout to scroll_layout
 
-        buttonCalc = QPushButton('Generate ', self)
+        buttonCalc = QPushButton('Generate', self)
         buttonCalc.setToolTip('This is an example button')
-        buttonCalc.clicked.connect(self.choose_algorithm)
-        buttonCalc.setStyleSheet("background-color : #C39BD3")
-        buttonCalc.setFont(self.font)
-        layout.addWidget(buttonCalc)
+        scroll_layout.addWidget(buttonCalc)  # Corrected from home_layout to scroll_layout
 
-        # toolbar.addAction(stemmingActionPoter)
-        # toolbar.addAction(stemmingActionSnowball)
-        # toolbar.addAction(lemmatizationAction)
+        self.stacked_widget.addWidget(home_widget)
 
-    tokenizedText = ""
+    def create_plot_page(self, df ,  df2):
+        plot_widget = QWidget()
+        plot_layout = QVBoxLayout(plot_widget)
 
-    # def main_event(self):
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
 
-    def choose_algorithm(self ):
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)  # Corrected from plot_layout to scroll_layout
+        scroll_area.setWidget(scroll_content)
+
+        plot_layout.addWidget(scroll_area)  # Add scroll_area to plot_layout
+
+        # Example plot canvas
+        self.plot_canvas = PlotCanvas(df, df2,  self)
+        scroll_layout.addWidget(self.plot_canvas)  # Corrected from plot_layout to scroll_layout
+
+        self.stacked_widget.addWidget(plot_widget)
+
+    def show_home_page(self):
+        self.stacked_widget.setCurrentIndex(0)
+
+    def show_plot_page(self):
+        self.stacked_widget.setCurrentIndex(1)
+
+    def show_model_page(self):
+        self.stacked_widget.setCurrentIndex(2)
+
+    def choose_algorithm(self):
         text = self.tokenizedText
         selected_algorithm = self.dropdown.currentText()
 
@@ -156,7 +204,6 @@ class MyWindow(QMainWindow):
             print(f'Error: {e}')
             self.result_label.setText('Error processing text')
 
-
     def choose_algorithm_tokens(self):
         text = self.input_field.text()
         selected_algorithm = self.dropdownTokens.currentText()
@@ -170,7 +217,6 @@ class MyWindow(QMainWindow):
 
         self.tokenizedText = ' '.join(result)
         print(self.tokenizedText)
-        # self.result_label.setText(self.tokenizedText)
 
     def about(self):
         # Pop up a simple about message box
@@ -198,11 +244,15 @@ class MyWindow(QMainWindow):
         stemmed_text = ", ".join(stemmed_words)
         return f"SpiCy: {stemmed_text}"
 
-def main():
+def main(df , df2):
     app = QApplication(sys.argv)
-    main_window = MyWindow(getLemmasPlots())
+    main_window = MyWindow(df , df2)
     main_window.show()
     sys.exit(app.exec_())
 
+
+df = getLemmasPlots()
+df2 = getStemmersPlots()
+
 if __name__ == '__main__':
-    main()
+    main(df, df2)
